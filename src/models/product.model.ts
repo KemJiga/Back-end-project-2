@@ -19,73 +19,68 @@ type ProductInput = {
   restaurant: ProductDocument['restaurant'];
 };
 
-const productSchema = new Schema(
-  {
-    name: {
-      type: String,
-      trim: true,
-      required: [true, 'Name is required'],
-    },
-    description: {
-      type: String,
-      required: [true, 'Description is required'],
-      validate: {
-        validator(description: string) {
-          return description.length <= 150 && description.length >= 10;
-        },
-        message: '{VALUE} is not a valid description',
+const productSchema = new Schema({
+  name: {
+    type: String,
+    trim: true,
+    required: [true, 'Name is required'],
+  },
+  description: {
+    type: String,
+    required: [true, 'Description is required'],
+    validate: {
+      validator(description: string) {
+        return description.length <= 150 && description.length >= 10;
       },
-    },
-    price: {
-      type: Number,
-      required: [true, 'Price is required'],
-      validate: {
-        validator(num: number) {
-          return num >= 0;
-        },
-        message: '{VALUE} is not a valid popularity number',
-      },
-    },
-    category: {
-      type: [String],
-      validate: {
-        validator(category: [string]) {
-          return category.length > 0;
-        },
-        message: '{VALUE} is not a valid category',
-      },
-    },
-    restaurant: {
-      type: Schema.Types.ObjectId,
-      ref: 'restaurants',
-      required: [true, 'Product must belong to a restaurant'],
-      validate: {
-        async validator(restaurantId: Schema.Types.ObjectId) {
-          const restaurant = await mongoose.model('Restaurants').findById(restaurantId);
-          if (!restaurant || restaurant.deletedAt !== null) {
-            throw new Error('Restaurant not found');
-          }
-        },
-      },
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
-    },
-    deletedAt: {
-      type: Date,
-      default: null,
+      message: '{VALUE} is not a valid description',
     },
   },
-  {
-    collection: 'products',
-  }
-);
+  price: {
+    type: Number,
+    required: [true, 'Price is required'],
+    validate: {
+      validator(num: number) {
+        return num >= 0;
+      },
+      message: '{VALUE} is not a valid popularity number',
+    },
+  },
+  category: {
+    type: [String],
+    validate: {
+      validator(category: [string]) {
+        return category.length > 0;
+      },
+      message: '{VALUE} is not a valid category',
+    },
+  },
+  restaurant: {
+    type: Schema.Types.ObjectId,
+    ref: 'restaurants',
+    required: [true, 'Product must belong to a restaurant'],
+    validate: {
+      async validator(restaurantId: Schema.Types.ObjectId) {
+        const restaurant = await mongoose.model('Restaurant').findById(restaurantId);
+        if (!restaurant || restaurant.deletedAt !== null) {
+          throw new Error('Restaurant not found');
+        }
+      },
+    },
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
+});
 
-const Product: Model<ProductDocument> = mongoose.model<ProductDocument>('Order', productSchema);
+const Product: Model<ProductDocument> = mongoose.model<ProductDocument>('Product', productSchema);
 
 export { Product, ProductInput, ProductDocument };

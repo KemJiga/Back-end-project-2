@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { User, UserInput } from '../models/user.model';
 import crypto from 'crypto';
 
+//maybe add later
 const hashPassword = (password: string) => {
   const salt = crypto.randomBytes(16).toString('hex');
   return crypto.pbkdf2Sync(password, salt, 100, 64, `sha512`).toString(`hex`);
@@ -50,6 +51,7 @@ async function createUser(req: Request, res: Response) {
     const newUser = await User.create(userInput);
     res.status(201).json(newUser);
     console.log('user added');
+    console.log('this is running on typescript');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }

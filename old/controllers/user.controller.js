@@ -37,6 +37,7 @@ async function createUser(req, res) {
     await newUser.save();
     res.status(201).json(newUser);
     console.log('user added');
+    console.log('this is not running on typescript');
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -46,7 +47,7 @@ async function deleteUser(req, res) {
   const { id } = req.params;
   const update = { deletedAt: Date.now(), updatedAt: Date.now() };
   try {
-    const user = await User.findOneAndUpdate({ _id: id, deletedAt:null }, update, {
+    const user = await User.findOneAndUpdate({ _id: id, deletedAt: null }, update, {
       new: true,
     });
     if (user === null || user.length === 0) {
