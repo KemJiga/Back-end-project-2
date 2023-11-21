@@ -14,7 +14,6 @@ type RestaurantInput = {
   name: RestaurantDocument['name'];
   address: RestaurantDocument['address'];
   category: RestaurantDocument['category'];
-  popularity: RestaurantDocument['popularity'];
 };
 
 const restaurantSchema = new Schema(
