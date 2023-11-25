@@ -40,10 +40,10 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 // Routes
-app.use('/api/user', userRouter);
-app.use('/api/restaurant', restaurantRouter);
-app.use('/api/product', productRouter);
-app.use('/api/order', orderRouter);
+app.use('/api/users', userRouter);
+app.use('/api/restaurants', restaurantRouter);
+app.use('/api/products', productRouter);
+app.use('/api/orders', orderRouter);
 
 // Endpoint for 404 error
 app.use((req, res) => {
