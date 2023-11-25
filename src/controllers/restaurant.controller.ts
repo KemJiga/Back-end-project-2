@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import cookieJwtAuth from '../middlewares/cookieJwtAuth';
 import { Restaurant, RestaurantInput } from '../models/restaurant.model';
 
 interface Query {
@@ -9,13 +10,18 @@ interface Query {
 
 async function createRestaurant(req: Request, res: Response) {
   const { name, category, address } = req.body;
-  try {
-    const restaurantInput: RestaurantInput = { name, category, address };
-    const newRestaurant = await Restaurant.create(restaurantInput);
-    res.status(201).json(newRestaurant);
-    console.log('restaurant added');
-  } catch (e) {
-    if (e instanceof Error) res.status(500).json({ message: e.message });
+  const auth = cookieJwtAuth.cookieJwtAuth(req, res);
+  if (auth) {
+    try {
+      const restaurantInput: RestaurantInput = { name, category, address };
+      const newRestaurant = await Restaurant.create(restaurantInput);
+      res.status(201).json(newRestaurant);
+      console.log('restaurant added');
+    } catch (e) {
+      if (e instanceof Error) res.status(500).json({ message: e.message });
+    }
+  }else{
+    res.status(401).json({message: "Unauthorized"});
   }
 }
 

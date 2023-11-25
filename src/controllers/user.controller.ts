@@ -6,12 +6,6 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 dotenv.config();
 
-//maybe add later
-const hashPassword = (password: string) => {
-  const salt = crypto.randomBytes(16).toString('hex');
-  return crypto.pbkdf2Sync(password, salt, 100, 64, `sha512`).toString(`hex`);
-};
-
 function comparePassword(user: UserDocument, candidatePassword: string) {
   return new Promise<boolean>((resolve, reject) => {
     bcrypt.compare(candidatePassword, user.password, (err, isMatch) => {
