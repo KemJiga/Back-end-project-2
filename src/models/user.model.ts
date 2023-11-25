@@ -125,14 +125,14 @@ userSchema.pre('findOneAndUpdate', async function (next) {
 });
 */
 
-userSchema.methods.comparePassword = function (this: UserDocument, candidatePassword: string) {
+/*userSchema.methods.comparePassword = function (this: UserDocument, candidatePassword: string) {
   return new Promise<boolean>((resolve, reject) => {
     bcrypt.compare(candidatePassword, this.password, (err, isMatch) => {
       if (err) return reject(err);
       resolve(isMatch);
     });
   });
-};
+};*/
 
 const User: Model<UserDocument> = mongoose.model<UserDocument>('User', userSchema);
 

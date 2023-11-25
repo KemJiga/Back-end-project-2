@@ -1,12 +1,49 @@
+import jwt from "jsonwebtoken";
 import { Request, Response } from 'express';
-import { User, UserInput } from '../models/user.model';
+import { User, UserInput, UserDocument } from '../models/user.model';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+dotenv.config();
 
 //maybe add later
 const hashPassword = (password: string) => {
   const salt = crypto.randomBytes(16).toString('hex');
   return crypto.pbkdf2Sync(password, salt, 100, 64, `sha512`).toString(`hex`);
 };
+
+function comparePassword(user: UserDocument, candidatePassword: string) {
+  return new Promise<boolean>((resolve, reject) => {
+    bcrypt.compare(candidatePassword, user.password, (err, isMatch) => {
+      if (err) return reject(err);
+      resolve(isMatch);
+    });
+  });
+};
+
+async function login(req: Request, res: Response) {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email, deletedAt: null });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+    } else {
+      if (await comparePassword(user, password) === false) {
+        res.status(403).json({ error: 'Invalid login' });
+      }
+
+      //delete user.password;
+      const token = jwt.sign({ _id: user._id }, process.env.MY_SECRET as string, { expiresIn: '1d' });
+      res.cookie('token', token, { httpOnly: true });
+
+      console.log(token);
+      res.status(200).json(user);
+      console.log('user displayed');
+    }
+  } catch (e) {
+    if (e instanceof Error) res.status(500).json({ error: e.message });
+  }
+}
 
 async function getUser(req: Request, res: Response) {
   const { email, password } = req.body;
@@ -97,4 +134,4 @@ async function updateUser(req: Request, res: Response) {
   }
 }
 
-export { getUser, getUserById, createUser, deleteUser, updateUser };
+export { getUser, getUserById, createUser, deleteUser, updateUser, login };
