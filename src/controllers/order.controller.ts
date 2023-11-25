@@ -109,7 +109,7 @@ async function updateOrder(req: Request, res: Response) {
       res.status(404).json({ error: 'Order not found' });
     } else {
       if (order.status !== 'Sended' && order.status != 'Delivered') {
-        const updatedOrder = await Order.findByIdAndUpdate(id, { products, status }, { new: true });
+        const updatedOrder = await Order.findByIdAndUpdate(id, { products, status, updatedAt: Date.now() }, { new: true });
         res.status(200).json(updatedOrder);
         console.log('Order updated');
       } else {
