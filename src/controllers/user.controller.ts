@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import { User, UserInput, UserDocument } from '../models/user.model';
-import { UnauthorizedError, getUserFromToken } from '../middlewares/jwtAuth';
+import { UnauthorizedError, getUserFromToken, getIdFronToken } from '../middlewares/jwtAuth';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import twoFactor from 'node-2fa';
@@ -55,15 +55,15 @@ async function login(req: Request, res: Response) {
 
 async function getUserById(req: Request, res: Response) {
   const { _id } = req.params;
-  const loggedUser = await getUserFromToken(req);
+  const loggedUserId = await getIdFronToken(req);
 
   try {
+    if (loggedUserId.toString() !== _id) {
+      throw new UnauthorizedError('Unauthorized User');
+    }
     const user = await User.findById(_id);
     if (!user || user.deletedAt !== null) {
       throw new Error('User not found');
-    }
-    if (loggedUser._id.toString() !== user?._id.toString()) {
-      throw new UnauthorizedError('Unauthorized User');
     }
     res.status(200).json(user);
     console.log('user displayed by id');
@@ -101,15 +101,10 @@ async function createUser(req: Request, res: Response) {
 
 async function deleteUser(req: Request, res: Response) {
   const { _id } = req.params;
-  const loggedUser = await getUserFromToken(req);
+  const loggedUserId = await getIdFronToken(req);
 
-  const searchedUser = await User.findById(_id);
   try {
-    if (!searchedUser) {
-      throw new Error('User not found');
-    }
-
-    if (loggedUser._id.toString() !== searchedUser?._id.toString()) {
+    if (loggedUserId.toString() !== _id) {
       throw new UnauthorizedError('Unauthorized User');
     }
 
@@ -118,6 +113,10 @@ async function deleteUser(req: Request, res: Response) {
       { deletedAt: Date.now() },
       { new: true }
     );
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     res.status(200).json(user);
     console.log('user deleted');
@@ -128,24 +127,23 @@ async function deleteUser(req: Request, res: Response) {
 
 async function updateUser(req: Request, res: Response) {
   const { _id } = req.params;
-  const loggedUser = await getUserFromToken(req);
-  const searchedUser = await User.findById(_id);
+  
+  const loggedUserId = await getIdFronToken(req);
 
   try {
-    if (!searchedUser || searchedUser.deletedAt !== null) {
-      throw new Error('User not found');
-    }
-
-    if (loggedUser._id.toString() !== searchedUser?._id.toString()) {
+    if (loggedUserId.toString() !== _id) {
       throw new UnauthorizedError('Unauthorized User');
     }
-
     const { name, email, password, phone } = req.body;
     const user = await User.findOneAndUpdate(
       { _id: _id, deletedAt: null },
       { name, email, password, phone, updatedAt: Date.now() },
       { new: true }
     );
+
+    if (!user) {
+      throw new Error('User not found');
+    }
 
     res.status(200).json(user);
     console.log('user updated');
