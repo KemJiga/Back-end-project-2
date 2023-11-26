@@ -1,17 +1,17 @@
 import mongoose, { Schema, Model, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
 
-type twoFactorDocument = Document & {
+type UsertwFaDocument = Document & {
   user: string;
   secret: string;
 };
 
-type twoFactorInput = {
-  user: twoFactorDocument['user'];
-  secret: twoFactorDocument['secret'];
+type UsertwFaInput = {
+  user: UsertwFaDocument['user'];
+  secret: UsertwFaDocument['secret'];
 };
 
-const twoFactorSchema = new Schema({
+const UsertwFaSchema = new Schema({
   user: {
     type: Schema.Types.String,
     required: [true, 'Name is required'],
@@ -23,7 +23,7 @@ const twoFactorSchema = new Schema({
   },
 });
 
-twoFactorSchema.pre('findOne', async function (this: any, next: (err?: Error) => void) {
+UsertwFaSchema.pre('findOne', async function (this: any, next: (err?: Error) => void) {
   const user_id = this.getQuery();
   const saltRounds = 10;
 
@@ -34,7 +34,7 @@ twoFactorSchema.pre('findOne', async function (this: any, next: (err?: Error) =>
   next();
 });
 
-twoFactorSchema.pre('save', function (this: twoFactorDocument, next: (err?: Error) => void) {
+UsertwFaSchema.pre('save', function (this: UsertwFaDocument, next: (err?: Error) => void) {
   // only hash the password if it has been modified (or is new)
 
   const SALT_WORK_FACTOR = 10;
@@ -97,9 +97,9 @@ userSchema.pre('findOneAndUpdate', async function (next) {
   });
 };*/
 
-const User: Model<twoFactorDocument> = mongoose.model<twoFactorDocument>(
-  'User_twofa',
-  twoFactorSchema
+const UsertwFa: Model<UsertwFaDocument> = mongoose.model<UsertwFaDocument>(
+  'UsertwFa',
+  UsertwFaSchema
 );
 
-export { User, twoFactorInput, twoFactorDocument };
+export { UsertwFa, UsertwFaInput, UsertwFaDocument };

@@ -4,6 +4,9 @@ import { User, UserInput, UserDocument } from '../models/user.model';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
+import twoFactor from 'node-2fa';
+import { UsertwFa, UsertwFaInput, UsertwFaDocument } from '../models/2fa.model';
+
 dotenv.config();
 
 function comparePassword(user: UserDocument, candidatePassword: string) {
@@ -16,7 +19,7 @@ function comparePassword(user: UserDocument, candidatePassword: string) {
 }
 
 async function login(req: Request, res: Response) {
-  const { email, password } = req.body;
+  const { email, password, pin } = req.body;
   try {
     const user = await User.findOne({ email, deletedAt: null });
     if (!user) {
@@ -24,6 +27,19 @@ async function login(req: Request, res: Response) {
     } else {
       if ((await comparePassword(user, password)) === false) {
         res.status(403).json({ error: 'Invalid login' });
+      }
+      if (user.type === 'Restaurant admin') {
+        if (pin) {
+          const user_2fa = await UsertwFa.findOne(user._id);
+          if (user_2fa) {
+            const fa = twoFactor.verifyToken(user_2fa.secret, pin);
+            if (!fa) res.status(403).json({ error: 'Invalid login (wrong pin)' });
+          } else {
+            res.status(404).json({ error: 'User 2fa not found' });
+          }
+        } else {
+          res.status(403).json({ error: 'Invalid login (no 2fa pin provided)' });
+        }
       }
       const token = jwt.sign({ _id: user._id }, process.env.MY_SECRET as string, {
         expiresIn: '1d',
@@ -78,6 +94,15 @@ async function createUser(req: Request, res: Response) {
       type,
     };
     const newUser = await User.create(userInput);
+    if (type === 'Restaurant admin') {
+      const newSecret = twoFactor.generateSecret({
+        name: 'BACK-END-PROJECT-2',
+        account: newUser._id,
+      });
+      const usertwFaInput: UsertwFaInput = { user: newUser._id, secret: newSecret.secret };
+      const secretTwfa = await UsertwFa.create(usertwFaInput);
+      res.status(201).json({ newUser, secretTwfa });
+    }
     res.status(201).json(newUser);
     console.log('user added');
     console.log('this is running on typescript');
