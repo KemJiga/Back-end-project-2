@@ -17,7 +17,7 @@ function getJWTTokenFromHeader(req: Request) {
   return null;
 }
 
-async function getIdFronToken(req: Request): Promise<any> {
+async function getIdFromToken(req: Request): Promise<any> {
   try {
     const token = getJWTTokenFromHeader(req);
     if (token) {
@@ -50,4 +50,4 @@ async function getUserFromToken(req: Request): Promise<any> {
   }
 }
 
-export { getJWTTokenFromHeader, getUserFromToken, getIdFronToken, UnauthorizedError };
+export { getJWTTokenFromHeader, getUserFromToken, getIdFromToken, UnauthorizedError };
