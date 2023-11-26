@@ -17,6 +17,19 @@ function getJWTTokenFromHeader(req: Request) {
   return null;
 }
 
+async function getIdFronToken(req: Request): Promise<any> {
+  try {
+    const token = getJWTTokenFromHeader(req);
+    if (token) {
+      const MY_SECRET = process.env.MY_SECRET;
+      const jwtPayload = jwt.verify(token, MY_SECRET as string);
+      return (jwtPayload as JwtPayload)._id;
+    }
+  }catch (e) {
+    return null;
+  }
+}
+
 async function getUserFromToken(req: Request): Promise<any> {
   try {
     const token = getJWTTokenFromHeader(req);
@@ -37,4 +50,4 @@ async function getUserFromToken(req: Request): Promise<any> {
   }
 }
 
-export { getJWTTokenFromHeader, getUserFromToken, UnauthorizedError };
+export { getJWTTokenFromHeader, getUserFromToken, getIdFronToken, UnauthorizedError };
