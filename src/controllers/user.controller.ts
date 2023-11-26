@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import { User, UserInput, UserDocument } from '../models/user.model';
-import { UnauthorizedError, getUserFromToken, getIdFronToken } from '../middlewares/jwtAuth';
+import { UnauthorizedError, getUserFromToken, getIdFromToken } from '../middlewares/jwtAuth';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import * as twoFactor from 'node-2fa';
@@ -60,7 +60,7 @@ async function login(req: Request, res: Response) {
 
 async function getUserById(req: Request, res: Response) {
   const { _id } = req.params;
-  const loggedUserId = await getIdFronToken(req);
+  const loggedUserId = await getIdFromToken(req);
 
   try {
     if (loggedUserId.toString() !== _id) {
@@ -81,13 +81,7 @@ async function createUser(req: Request, res: Response) {
   const { name, email, password, phone, type } = req.body;
   console.log('what the hell happened1');
   try {
-    const userInput: UserInput = {
-      name,
-      email,
-      password,
-      phone,
-      type,
-    };
+    const userInput: UserInput = { name, email, password, phone, type };
     const newUser = await User.create(userInput);
     if (type === 'Restaurant admin') {
       const newSecret = twoFactor.generateSecret({
@@ -95,10 +89,12 @@ async function createUser(req: Request, res: Response) {
         account: newUser._id,
       });
       const usertwFaInput: UsertwFaInput = { user: newUser._id, secret: newSecret.secret };
+      console.log(newSecret);
       const secretTwfa = await UsertwFa.create(usertwFaInput);
       res.status(201).json({ newUser, secretTwfa });
+    } else {
+      res.status(201).json(newUser);
     }
-    res.status(201).json(newUser);
     console.log('user added');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -107,7 +103,7 @@ async function createUser(req: Request, res: Response) {
 
 async function deleteUser(req: Request, res: Response) {
   const { _id } = req.params;
-  const loggedUserId = await getIdFronToken(req);
+  const loggedUserId = await getIdFromToken(req);
 
   try {
     if (loggedUserId.toString() !== _id) {
@@ -133,8 +129,8 @@ async function deleteUser(req: Request, res: Response) {
 
 async function updateUser(req: Request, res: Response) {
   const { _id } = req.params;
-  
-  const loggedUserId = await getIdFronToken(req);
+
+  const loggedUserId = await getIdFromToken(req);
 
   try {
     if (loggedUserId.toString() !== _id) {
