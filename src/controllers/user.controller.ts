@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import { User, UserInput, UserDocument } from '../models/user.model';
-import crypto from 'crypto';
+import { UnauthorizedError, getUserFromToken, getIdFronToken } from '../middlewares/jwtAuth';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 import * as twoFactor from 'node-2fa';
@@ -58,31 +58,20 @@ async function login(req: Request, res: Response) {
   }
 }
 
-async function getUser(req: Request, res: Response) {
-  const { email, password } = req.body;
-  try {
-    const user = await User.find({ email, password, deletedAt: null });
-    if (user.length === 0) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.status(200).json(user);
-      console.log('user displayed');
-    }
-  } catch (e) {
-    if (e instanceof Error) res.status(500).json({ error: e.message });
-  }
-}
-
 async function getUserById(req: Request, res: Response) {
-  const { id } = req.params;
+  const { _id } = req.params;
+  const loggedUserId = await getIdFronToken(req);
+
   try {
-    const user = await User.findById(id);
-    if (!user || user.deletedAt !== null) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.status(200).json(user);
-      console.log('user displayed by id');
+    if (loggedUserId.toString() !== _id) {
+      throw new UnauthorizedError('Unauthorized User');
     }
+    const user = await User.findById(_id);
+    if (!user || user.deletedAt !== null) {
+      throw new Error('User not found');
+    }
+    res.status(200).json(user);
+    console.log('user displayed by id');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
@@ -117,43 +106,56 @@ async function createUser(req: Request, res: Response) {
 }
 
 async function deleteUser(req: Request, res: Response) {
-  const { id } = req.params;
-  const update = { deletedAt: Date.now(), updatedAt: Date.now() };
+  const { _id } = req.params;
+  const loggedUserId = await getIdFronToken(req);
+
   try {
-    const user = await User.findOneAndUpdate({ _id: id, deletedAt: null }, update, {
-      new: true,
-    });
-    if (!user) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.status(200).json(user);
-      console.log('user deleted');
+    if (loggedUserId.toString() !== _id) {
+      throw new UnauthorizedError('Unauthorized User');
     }
+
+    const user = await User.findOneAndUpdate(
+      { _id: _id, deletedAt: null },
+      { deletedAt: Date.now() },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    res.status(200).json(user);
+    console.log('user deleted');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
 }
 
 async function updateUser(req: Request, res: Response) {
-  const { id } = req.params;
-  const { name, email, password, phone } = req.body;
+  const { _id } = req.params;
+  
+  const loggedUserId = await getIdFronToken(req);
+
   try {
-    const user = await User.findOneAndUpdate(
-      { _id: id, deletedAt: null },
-      { name, email, password, phone, updatedAt: Date.now() },
-      {
-        new: true,
-      }
-    );
-    if (!user) {
-      res.status(404).json({ error: 'User not found' });
-    } else {
-      res.status(200).json(user);
-      console.log('user updated');
+    if (loggedUserId.toString() !== _id) {
+      throw new UnauthorizedError('Unauthorized User');
     }
+    const { name, email, password, phone } = req.body;
+    const user = await User.findOneAndUpdate(
+      { _id: _id, deletedAt: null },
+      { name, email, password, phone, updatedAt: Date.now() },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    res.status(200).json(user);
+    console.log('user updated');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
 }
 
-export { getUser, getUserById, createUser, deleteUser, updateUser, login };
+export { getUserById, createUser, deleteUser, updateUser, login };
