@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import { User, UserInput, UserDocument } from '../models/user.model';
 import crypto from 'crypto';
@@ -13,7 +13,7 @@ function comparePassword(user: UserDocument, candidatePassword: string) {
       resolve(isMatch);
     });
   });
-};
+}
 
 async function login(req: Request, res: Response) {
   const { email, password } = req.body;
@@ -22,17 +22,15 @@ async function login(req: Request, res: Response) {
     if (!user) {
       res.status(404).json({ error: 'User not found' });
     } else {
-      if (await comparePassword(user, password) === false) {
+      if ((await comparePassword(user, password)) === false) {
         res.status(403).json({ error: 'Invalid login' });
       }
-
-      //delete user.password;
-      const token = jwt.sign({ _id: user._id }, process.env.MY_SECRET as string, { expiresIn: '1d' });
-      res.cookie('token', token, { httpOnly: true });
+      const token = jwt.sign({ _id: user._id }, process.env.MY_SECRET as string, {
+        expiresIn: '1d',
+      });
 
       console.log(token);
-      res.status(200).json(user);
-      console.log('user displayed');
+      res.status(200).json({ token });
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });

@@ -11,12 +11,26 @@ type RestaurantDocument = Document & {
 };
 
 type RestaurantInput = {
+  owner: Schema.Types.ObjectId;
   name: RestaurantDocument['name'];
   address: RestaurantDocument['address'];
   category: RestaurantDocument['category'];
 };
 
 const restaurantSchema = new Schema({
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: 'users',
+    required: [true, 'User is required'],
+    validate: {
+      async validator(userId: Schema.Types.ObjectId) {
+        const user = await mongoose.model('User').findById(userId);
+        if (!user || user.deletedAt !== null) {
+          throw new Error('User not found');
+        }
+      },
+    },
+  },
   name: {
     type: String,
     trim: true,

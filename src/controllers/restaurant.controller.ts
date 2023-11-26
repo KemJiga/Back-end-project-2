@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import cookieJwtAuth from '../middlewares/cookieJwtAuth';
+import { UnauthorizedError, getUserFromToken } from '../middlewares/jwtAuth';
 import { Restaurant, RestaurantInput } from '../models/restaurant.model';
 
 interface Query {
@@ -10,18 +10,17 @@ interface Query {
 
 async function createRestaurant(req: Request, res: Response) {
   const { name, category, address } = req.body;
-  const auth = cookieJwtAuth.cookieJwtAuth(req, res);
-  if (auth) {
-    try {
-      const restaurantInput: RestaurantInput = { name, category, address };
-      const newRestaurant = await Restaurant.create(restaurantInput);
-      res.status(201).json(newRestaurant);
-      console.log('restaurant added');
-    } catch (e) {
-      if (e instanceof Error) res.status(500).json({ message: e.message });
+  const user = await getUserFromToken(req);
+  try {
+    const restaurantInput: RestaurantInput = { name, category, address, owner: user._id };
+    const newRestaurant = await Restaurant.create(restaurantInput);
+    res.status(201).json(newRestaurant);
+    console.log('restaurant added');
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'unauthorized user' });
     }
-  }else{
-    res.status(401).json({message: "Unauthorized"});
+    res.status(500).json({ error: 'internal error' });
   }
 }
 
