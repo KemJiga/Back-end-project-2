@@ -126,7 +126,10 @@ async function updateRestaurant(req: Request, res: Response) {
     res.status(200).json(restaurant);
     console.log('restaurant updated');
   } catch (e) {
-    if (e instanceof Error) res.status(500).json({ error: e.message });
+    if (e instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'unauthorized user' });
+    }
+    res.status(500).json({ error: 'internal error' });
   }
 }
 

@@ -8,7 +8,8 @@
     "start": "node src/App.js",
     "tsc": "tsc",
     "start2": "node build/index.js",
-    "dev2": "ts-node-dev src/main/index.ts"
+    "dev2": "ts-node-dev src/main/index.ts",
+    "test": "jest -c ./jest.unit.json --verbose --runInBand"
   },
   "keywords": [],
   "author": "",
@@ -27,11 +28,16 @@
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/jest": "^29.0.0",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/morgan": "^1.9.9",
+    "@types/supertest": "^2.0.16",
     "babel": "^6.23.0",
+    "jest": "^28.1.2",
     "nodemon": "^3.0.1",
     "prettier": "^3.0.3",
+    "supertest": "^6.3.3",
+    "ts-jest": "^28.0.5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.2"
   }

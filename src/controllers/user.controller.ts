@@ -123,7 +123,10 @@ async function deleteUser(req: Request, res: Response) {
     res.status(200).json(user);
     console.log('user deleted');
   } catch (e) {
-    if (e instanceof Error) res.status(500).json({ error: e.message });
+    if (e instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'unauthorized user' });
+    }
+    res.status(500).json({ error: 'internal error' });
   }
 }
 
@@ -150,7 +153,10 @@ async function updateUser(req: Request, res: Response) {
     res.status(200).json(user);
     console.log('user updated');
   } catch (e) {
-    if (e instanceof Error) res.status(500).json({ error: e.message });
+    if (e instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'unauthorized user' });
+    }
+    res.status(500).json({ error: 'internal error' });
   }
 }
 
