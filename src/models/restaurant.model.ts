@@ -1,6 +1,7 @@
 import mongoose, { Schema, Model, Document } from 'mongoose';
 
 type RestaurantDocument = Document & {
+  owner: Schema.Types.ObjectId;
   name: string;
   address: string;
   category: string;
