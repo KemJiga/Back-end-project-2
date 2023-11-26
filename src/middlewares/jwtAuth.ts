@@ -26,7 +26,7 @@ async function getUserFromToken(req: Request): Promise<any> {
       //TODO: improve type checking
       const _id = (jwtPayload as JwtPayload)._id;
       // find user by id and deletedAt == null
-      const user = await User.findOne({ _id, deletedAt: null });
+      const user = await User.findOne({ _id: _id, deletedAt: null });
       if (!user) {
         throw new UnauthorizedError('Unauthorized User');
       }
