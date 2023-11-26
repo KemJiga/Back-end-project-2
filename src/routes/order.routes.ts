@@ -12,9 +12,9 @@ const router = Router();
 
 router.post('/', createOrder);
 router.get('/created/', getCreatedOrders);
-router.get('/:id', getOrderById);
+router.get('/:_id', getOrderById);
 router.get('/', getFilteredOrders);
-router.patch('/:id', updateOrder);
-router.delete('/:id', deleteOrder);
+router.patch('/:_id', updateOrder);
+router.delete('/:_id', deleteOrder);
 
 export default router;
