@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { UnauthorizedError, getUserFromToken } from '../middlewares/jwtAuth';
+import { UnauthorizedError, getUserFromToken, getIdFromToken } from '../middlewares/jwtAuth';
 import { Restaurant, RestaurantInput } from '../models/restaurant.model';
 
 interface Query {
@@ -25,17 +25,24 @@ async function createRestaurant(req: Request, res: Response) {
 }
 
 async function getRestaurantById(req: Request, res: Response) {
-  const { id } = req.params;
+  const { _id } = req.params;
   try {
-    const restaurant = await Restaurant.findById(id);
+    const loggedUser = await getUserFromToken(req);
+    if (!loggedUser) {
+      throw new UnauthorizedError('Unauthorized User');
+    }
+    const restaurant = await Restaurant.findById(_id);
     if (!restaurant || restaurant.deletedAt !== null) {
       res.status(404).json({ error: 'restaurant not found' });
     } else {
       res.status(200).json(restaurant);
       console.log('restaurant found');
     }
-  } catch (e) {
-    if (e instanceof Error) res.status(500).json({ error: e.message });
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'unauthorized user' });
+    }
+    res.status(500).json({ error: 'internal error' });
   }
 }
 
@@ -46,6 +53,10 @@ async function getRestaurants(req: Request, res: Response) {
   if (category) query.category = category as string;
   console.log(query);
   try {
+    const loggedUser = await getUserFromToken(req);
+    if (!loggedUser) {
+      throw new UnauthorizedError('Unauthorized User');
+    }
     const restaurants = await Restaurant.find(query).sort({ popularity: -1 });
     if (restaurants.length === 0) {
       res.status(404).json({ error: 'restaurant not found' });
@@ -53,43 +64,67 @@ async function getRestaurants(req: Request, res: Response) {
       res.status(200).json(restaurants);
       console.log('restaurants displayed');
     }
-  } catch (e) {
-    if (e instanceof Error) res.status(500).json({ error: e.message });
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      res.status(401).json({ error: 'unauthorized user' });
+    }
+    res.status(500).json({ error: 'internal error' });
   }
 }
 
 async function deleteRestaurant(req: Request, res: Response) {
-  const { id } = req.params;
-  const update = { deletedAt: Date.now(), updatedAt: Date.now() };
+  const { _id } = req.params;
   try {
-    const restaurant = await Restaurant.findOneAndUpdate({ _id: id, deletedAt: null }, update, {
-      new: true,
-    });
-    if (!restaurant) {
+    const loggedUser = await getIdFromToken(req);
+
+    const rest = await Restaurant.findOne({ _id: _id, deletedAt: null });
+
+    if (!rest || rest.deletedAt !== null) {
       res.status(404).json({ error: 'restaurant not found' });
-    } else {
-      res.status(200).json(restaurant);
-      console.log('restaurant deleted');
     }
+
+    if (rest?.owner.toString() !== loggedUser._id.toString()) {
+      throw new UnauthorizedError('Unauthorized User');
+    }
+
+    const restaurant = await Restaurant.findOneAndUpdate(
+      { _id: _id, deletedAt: null },
+      { deleteAt: Date.now() },
+      {
+        new: true,
+      }
+    );
+
+    res.status(200).json(restaurant);
+    console.log('restaurant deleted');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
 }
 
 async function updateRestaurant(req: Request, res: Response) {
-  const { id } = req.params;
+  const { _id } = req.params;
   const { name, category, popularity, address } = req.body;
   const update = { name, category, popularity, address, updatedAt: Date.now() };
   try {
-    const restaurant = await Restaurant.findOneAndUpdate({ _id: id, deletedAt: null }, update, {
+    const loggedUser = await getIdFromToken(req);
+
+    const rest = await Restaurant.findOne({ _id: _id, deletedAt: null });
+
+    if (!rest || rest.deletedAt !== null) {
+      res.status(404).json({ error: 'restaurant not found' });
+    }
+
+    if (rest?.owner.toString() !== loggedUser._id.toString()) {
+      throw new UnauthorizedError('Unauthorized User');
+    }
+
+    const restaurant = await Restaurant.findOneAndUpdate({ _id: _id, deletedAt: null }, update, {
       new: true,
     });
-    if (!restaurant) {
-      res.status(404).json({ error: 'restaurant not found' });
-    } else {
-      res.status(200).json(restaurant);
-      console.log('restaurant updated');
-    }
+
+    res.status(200).json(restaurant);
+    console.log('restaurant updated');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
