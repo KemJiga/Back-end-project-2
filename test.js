@@ -1,9 +1,15 @@
-var twoFactor = require('node-2fa');
+const bcrypt = require('bcrypt');
 
-var newSecret = twoFactor.generateSecret({ name: 'My Awesome App', account: 'walter' });
-console.log(newSecret);
+bcrypt.genSalt(10, (err, salt) => {
+  if (err) return next(err);
 
-const fa = twoFactor.verifyToken('3ZI6QG7G4NWUUL5EPC55NDWTWI27NBST', '807111');
-// { delta: 0 }
+  // hash the password using the new salt
+  console.log(salt);
+  bcrypt.hash(this.password, salt, (hashErr, hash) => {
+    if (hashErr) return next(hashErr);
 
-console.log(fa);
+    // override the cleartext password with the hashed one
+    this.password = hash;
+    next();
+  });
+});

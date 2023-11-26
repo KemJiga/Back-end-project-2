@@ -24,13 +24,10 @@ const UsertwFaSchema = new Schema({
 });
 
 UsertwFaSchema.pre('findOne', async function (this: any, next: (err?: Error) => void) {
-  const user_id = this.getQuery();
-  const saltRounds = 10;
+  const user_id = this.getQuery()._id.toString();
 
-  const salt = await bcrypt.genSalt(saltRounds);
-  const hash = await bcrypt.hash(user_id, salt);
-  this.setQuery(hash);
-
+  const hash = await bcrypt.hash(user_id, process.env.TWOFA_SECRET_SALT as string);
+  this.setQuery({ user: hash });
   next();
 });
 
@@ -39,17 +36,12 @@ UsertwFaSchema.pre('save', function (this: UsertwFaDocument, next: (err?: Error)
 
   const SALT_WORK_FACTOR = 10;
   // generate a salt
-  bcrypt.genSalt(SALT_WORK_FACTOR, (err, salt) => {
-    if (err) return next(err);
+  bcrypt.hash(this.user.toString(), process.env.TWOFA_SECRET_SALT as string, (hashErr, hash) => {
+    if (hashErr) return next(hashErr);
 
-    // hash the password using the new salt
-    bcrypt.hash(this.user, salt, (hashErr, hash) => {
-      if (hashErr) return next(hashErr);
-
-      // override the cleartext password with the hashed one
-      this.user = hash;
-      next();
-    });
+    // override the cleartext password with the hashed one
+    this.user = hash;
+    next();
   });
 });
 

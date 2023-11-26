@@ -4,7 +4,7 @@ import { User, UserInput, UserDocument } from '../models/user.model';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
-import twoFactor from 'node-2fa';
+import * as twoFactor from 'node-2fa';
 import { UsertwFa, UsertwFaInput, UsertwFaDocument } from '../models/2fa.model';
 
 dotenv.config();
@@ -33,7 +33,12 @@ async function login(req: Request, res: Response) {
           const user_2fa = await UsertwFa.findOne(user._id);
           if (user_2fa) {
             const fa = twoFactor.verifyToken(user_2fa.secret, pin);
-            if (!fa) res.status(403).json({ error: 'Invalid login (wrong pin)' });
+
+            if (!fa) {
+              res.status(403).json({ error: 'Invalid login (wrong pin)' });
+            } else {
+              console.log('WE WONNN');
+            }
           } else {
             res.status(404).json({ error: 'User 2fa not found' });
           }
@@ -85,6 +90,7 @@ async function getUserById(req: Request, res: Response) {
 
 async function createUser(req: Request, res: Response) {
   const { name, email, password, phone, type } = req.body;
+  console.log('what the hell happened1');
   try {
     const userInput: UserInput = {
       name,
@@ -105,7 +111,6 @@ async function createUser(req: Request, res: Response) {
     }
     res.status(201).json(newUser);
     console.log('user added');
-    console.log('this is running on typescript');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
