@@ -21,6 +21,9 @@ function comparePassword(user: UserDocument, candidatePassword: string) {
 async function login(req: Request, res: Response) {
   const { email, password, pin } = req.body;
   try {
+    if (!email || !password) {
+      throw new Error('No data provided');
+    }
     const user = await User.findOne({ email, deletedAt: null });
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -50,7 +53,6 @@ async function login(req: Request, res: Response) {
         expiresIn: '1d',
       });
 
-      console.log(token);
       res.status(200).json({ token });
     }
   } catch (e) {
@@ -63,13 +65,21 @@ async function getUserById(req: Request, res: Response) {
   const loggedUserId = await getIdFromToken(req);
 
   try {
+    if (!_id) {
+      res.status(400).json({ error: 'No id provided' });
+      return;
+    }
+
+    const user = await User.findById(_id);
+    if (!user || user.deletedAt !== null) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
     if (loggedUserId.toString() !== _id) {
       throw new UnauthorizedError('Unauthorized User');
     }
-    const user = await User.findById(_id);
-    if (!user || user.deletedAt !== null) {
-      throw new Error('User not found');
-    }
+
     res.status(200).json(user);
     console.log('user displayed by id');
   } catch (e) {

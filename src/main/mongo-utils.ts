@@ -1,10 +1,9 @@
 import mongoose, { ConnectOptions } from 'mongoose';
-const MONGO_URI = process.env.MONGO_URI;
 
 // Function to connect to database due to top-level await restrictions in es2016
-export const connectdb = async () => {
+export const connectdb = async (URI: string) => {
   await mongoose
-    .connect(MONGO_URI!, {
+    .connect(URI!, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     } as ConnectOptions)
