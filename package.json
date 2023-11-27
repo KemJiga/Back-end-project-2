@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/App.js",
-    "start": "node src/App.js",
+    "dev": "nodemon src/main/index.ts",
+    "start": "node src/main/index.ts",
     "tsc": "tsc",
     "start2": "node build/index.js",
     "dev2": "ts-node-dev src/main/index.ts",

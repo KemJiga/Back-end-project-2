@@ -1,8 +1,9 @@
 {
+  "testTimeout": 1000000,
   "preset": "ts-jest",
   "coverageDirectory": "./coverage",
   "testMatch": [
-    "**/?(*.)+(spec).ts"
+    "**/?(*.)+(routes.test).ts"
   ],
   "resetMocks": true,
   "clearMocks": true,

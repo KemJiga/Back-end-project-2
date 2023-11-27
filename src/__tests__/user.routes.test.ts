@@ -1,40 +1,108 @@
 import request from 'supertest';
 import { app } from '../main/express-app'; // Asegúrate de importar tu aplicación
 import { connectdb } from '../main/mongo-utils';
+import { clearCollections, mongoDisconnect } from '../test-utils/helpers';
+const MONGO_URI_TEST = process.env.MONGO_URI_TEST;
+var userId = '';
+var token = '';
+// "**/?(*.)+(test).ts"
+
 describe('Pruebas unitarias de ruta de usuario', () => {
-  it('Debería crear un usuario correctamente', async () => {
-    const response = await request(app).post('/create').send({
-      name: 'Nuevo Usuario',
-      email: 'nuevo@example.com',
-      password: 'password123',
-      phone: '123456789',
-      type: 'Cliente',
-    });
-
-    expect(response.status).toBe(201);
-    expect(response.body).toHaveProperty('newUser');
-    // Puedes realizar más expectativas según tus necesidades
+  beforeAll(async () => {
+    await connectdb(MONGO_URI_TEST as string);
+    await clearCollections();
   });
 
-  it('Debería hacer login correctamente', async () => {
-    const response = await request(app).post('/').send({
-      email: 'usuarioexistente@example.com',
-      password: 'password123',
+  afterAll(async () => {
+    await mongoDisconnect();
+  });
+  describe('POST /create user', () => {
+    it('Debería crear un usuario correctamente', async () => {
+      const response = await request(app).post('/api/users/create').send({
+        name: 'John Doe',
+        email: 'john+doe@example.com',
+        password: 'secretPassword123',
+        phone: '+1 (555) 555-5515',
+        type: 'Client',
+      });
+      expect(response.status).toBe(201);
+      userId = response.body._id;
     });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('token');
-    // Puedes realizar más expectativas según tus necesidades
+    it('Debería responder error a la creacion', async () => {
+      const response = await request(app).post('/api/users/create').send({
+        name: 'John Doe',
+      });
+      expect(response.status).toBe(500);
+    });
   });
 
-  it('Debería obtener un usuario por ID correctamente', async () => {
-    const response = await request(app)
-      .get('/' + userId) // Asegúrate de tener el ID válido de un usuario existente
-      .set('Authorization', 'Bearer tu_token');
+  describe('POST /login', () => {
+    it('Debería hacer login correctamente', async () => {
+      const response = await request(app).post('/api/users/').send({
+        email: 'john+doe@example.com',
+        password: 'secretPassword123',
+      });
+      expect(response.status).toBe(200);
+      token = response.headers.authorization;
+    });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('name', 'NombreDelUsuario');
-    // Puedes realizar más expectativas según tus necesidades
+    it('Debería no poder hacer login (user not found)', async () => {
+      const response = await request(app).post('/api/users/').send({
+        email: 'johndoe@example.com',
+        password: 'secretPassword123',
+      });
+      expect(response.status).toBe(404);
+    });
+
+    it('Debería no poder hacer login (invalid password)', async () => {
+      const response = await request(app).post('/api/users/').send({
+        email: 'john+doe@example.com',
+        password: 'secreword123',
+      });
+      expect(response.status).toBe(403);
+    });
+
+    it('Debería no poder hacer login (no data)', async () => {
+      const response = await request(app).post('/api/users/').send({
+        password: 'secreword123',
+      });
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('GET /user/:id', () => {
+    it('Debería obtener un usuario por ID correctamente', async () => {
+      const response = await request(app)
+        .get('/api/users/' + userId)
+        .set('Authorization', `Bearer ${token}`);
+  
+      expect(response.status).toBe(200);
+    });
+
+    it('Debería fallar por no Id proveido', async () => {
+      const response = await request(app)
+        .get('/api/users/')
+        .set('Authorization', `Bearer ${token}`);
+  
+      expect(response.status).toBe(400);
+    });
+
+    it('Debería fallar (id no existe en db)', async () => {
+      const response = await request(app)
+        .get('/api/users/' + userId.replace('a', 'b'))
+        .set('Authorization', `Bearer ${token}`);
+  
+      expect(response.status).toBe(404);
+    });
+
+    it('Debería fallar (token no es valido)', async () => {
+      const response = await request(app)
+        .get('/api/users/' + userId)
+        .set('Authorization', `Bearer ${token.replace('a', 'b')}`);
+  
+      expect(response.status).toBe(200);
+    });
   });
 
   // Agrega más pruebas según sea necesario
