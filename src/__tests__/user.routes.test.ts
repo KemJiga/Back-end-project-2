@@ -44,7 +44,7 @@ describe('Pruebas unitarias de ruta de usuario', () => {
         password: 'secretPassword123',
       });
       expect(response.status).toBe(200);
-      token = response.headers.authorization;
+      token = response.body.token;
     });
 
     it('Debería no poder hacer login (user not found)', async () => {
