@@ -110,6 +110,10 @@ async function updateProduct(req: Request, res: Response) {
   const { _id } = req.params;
   const { name, price, category, deletedAt } = req.body;
   const update = { name, price, category, deletedAt, updatedAt: Date.now() };
+
+  if (!(name || price || category || deletedAt)) {
+    res.status(400).json({ error: 'No parameters to update provided' });
+  }
   try {
     const prod = await Product.findOne({ _id: _id, deletedAt: null });
     if (!prod) {

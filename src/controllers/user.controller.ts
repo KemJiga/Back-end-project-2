@@ -36,11 +36,8 @@ async function login(req: Request, res: Response) {
           const user_2fa = await UsertwFa.findOne(user._id);
           if (user_2fa) {
             const fa = twoFactor.verifyToken(user_2fa.secret, pin);
-
             if (!fa) {
               res.status(403).json({ error: 'Invalid login (wrong pin)' });
-            } else {
-              console.log('WE WONNN');
             }
           } else {
             res.status(404).json({ error: 'User 2fa not found' });
@@ -89,7 +86,6 @@ async function getUserById(req: Request, res: Response) {
 
 async function createUser(req: Request, res: Response) {
   const { name, email, password, phone, type } = req.body;
-  console.log('what the hell happened1');
   try {
     const userInput: UserInput = { name, email, password, phone, type };
     const newUser = await User.create(userInput);
@@ -99,13 +95,11 @@ async function createUser(req: Request, res: Response) {
         account: newUser._id,
       });
       const usertwFaInput: UsertwFaInput = { user: newUser._id, secret: newSecret.secret };
-      console.log(newSecret);
       const secretTwfa = await UsertwFa.create(usertwFaInput);
       res.status(201).json({ newUser, secretTwfa });
     } else {
       res.status(201).json(newUser);
     }
-    console.log('user added');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }

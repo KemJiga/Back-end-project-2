@@ -123,6 +123,9 @@ async function getFilteredOrders(req: Request, res: Response) {
 async function updateOrder(req: Request, res: Response) {
   const { _id } = req.params;
   const { products, status } = req.body;
+  if (!(products || status)) {
+    res.status(400).json({ error: 'No parameters to update provided' });
+  }
   try {
     const user = await getUserFromToken(req);
     if (!user) {
@@ -157,18 +160,22 @@ async function deleteOrder(req: Request, res: Response) {
       throw new UnauthorizedError('Unauthorized User');
     }
     const ord = await Order.findOne({ _id: _id, deletedAt: null });
-    if (!ord){
+    if (!ord) {
       res.status(404).json({ error: 'Order not found' });
       return;
     }
     if (user._id.toString() !== ord?.user.toString()) {
       throw new UnauthorizedError('Unauthorized User');
     }
-    const deletedOrder = await Order.findOneAndUpdate({ _id: _id, deletedAt: null }, { deletedAt: Date.now() }, {
-      new: true,
-    });
-      res.status(200).json(deletedOrder);
-      console.log('Order deleted');
+    const deletedOrder = await Order.findOneAndUpdate(
+      { _id: _id, deletedAt: null },
+      { deletedAt: Date.now() },
+      {
+        new: true,
+      }
+    );
+    res.status(200).json(deletedOrder);
+    console.log('Order deleted');
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
