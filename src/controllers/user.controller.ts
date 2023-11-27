@@ -27,9 +27,11 @@ async function login(req: Request, res: Response) {
     const user = await User.findOne({ email, deletedAt: null });
     if (!user) {
       res.status(404).json({ error: 'User not found' });
+      return;
     } else {
       if ((await comparePassword(user, password)) === false) {
         res.status(403).json({ error: 'Invalid login' });
+        return;
       }
       if (user.type === 'Restaurant admin') {
         if (pin) {
@@ -38,12 +40,15 @@ async function login(req: Request, res: Response) {
             const fa = twoFactor.verifyToken(user_2fa.secret, pin);
             if (!fa) {
               res.status(403).json({ error: 'Invalid login (wrong pin)' });
+              return;
             }
           } else {
             res.status(404).json({ error: 'User 2fa not found' });
+            return;
           }
         } else {
           res.status(403).json({ error: 'Invalid login (no 2fa pin provided)' });
+          return;
         }
       }
       const token = jwt.sign({ _id: user._id }, process.env.MY_SECRET as string, {
@@ -51,6 +56,7 @@ async function login(req: Request, res: Response) {
       });
 
       res.status(200).json({ token });
+      return;
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -60,7 +66,6 @@ async function login(req: Request, res: Response) {
 async function getUserById(req: Request, res: Response) {
   const { _id } = req.params;
   const loggedUserId = await getIdFromToken(req);
-
   try {
     if (!_id) {
       res.status(400).json({ error: 'No id provided' });
@@ -78,7 +83,7 @@ async function getUserById(req: Request, res: Response) {
     }
 
     res.status(200).json(user);
-    console.log('user displayed by id');
+    return;
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
@@ -97,8 +102,10 @@ async function createUser(req: Request, res: Response) {
       const usertwFaInput: UsertwFaInput = { user: newUser._id, secret: newSecret.secret };
       const secretTwfa = await UsertwFa.create(usertwFaInput);
       res.status(201).json({ newUser, secretTwfa });
+      return;
     } else {
       res.status(201).json(newUser);
+      return;
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -125,12 +132,14 @@ async function deleteUser(req: Request, res: Response) {
     }
 
     res.status(200).json(user);
-    console.log('user deleted');
+    return;
   } catch (e) {
     if (e instanceof UnauthorizedError) {
       res.status(401).json({ error: 'unauthorized user' });
+      return;
     }
     res.status(500).json({ error: 'internal error' });
+    return;
   }
 }
 
@@ -151,16 +160,18 @@ async function updateUser(req: Request, res: Response) {
     );
 
     if (!user) {
-      throw new Error('User not found');
+      res.status(404).json({ error: 'User not found' });
+    return;;
     }
 
     res.status(200).json(user);
-    console.log('user updated');
   } catch (e) {
     if (e instanceof UnauthorizedError) {
       res.status(401).json({ error: 'unauthorized user' });
+      return;
     }
     res.status(500).json({ error: 'internal error' });
+    return;
   }
 }
 

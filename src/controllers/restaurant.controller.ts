@@ -15,12 +15,13 @@ async function createRestaurant(req: Request, res: Response) {
     const restaurantInput: RestaurantInput = { name, category, address, owner: user._id };
     const newRestaurant = await Restaurant.create(restaurantInput);
     res.status(201).json(newRestaurant);
-    console.log('restaurant added');
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       res.status(401).json({ error: 'unauthorized user' });
+      return;
     }
     res.status(500).json({ error: 'internal error' });
+    return;
   }
 }
 
@@ -34,15 +35,18 @@ async function getRestaurantById(req: Request, res: Response) {
     const restaurant = await Restaurant.findById(_id);
     if (!restaurant || restaurant.deletedAt !== null) {
       res.status(404).json({ error: 'restaurant not found' });
+      return;
     } else {
       res.status(200).json(restaurant);
-      console.log('restaurant found');
+      return;
     }
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       res.status(401).json({ error: 'unauthorized user' });
+      return;
     }
     res.status(500).json({ error: 'internal error' });
+    return;
   }
 }
 
@@ -51,7 +55,6 @@ async function getRestaurants(req: Request, res: Response) {
   const query: Query = { deletedAt: null };
   if (name) query.name = { $regex: name as string, $options: 'i' };
   if (category) query.category = category as string;
-  console.log(query);
   try {
     const loggedUser = await getUserFromToken(req);
     if (!loggedUser) {
@@ -60,15 +63,18 @@ async function getRestaurants(req: Request, res: Response) {
     const restaurants = await Restaurant.find(query).sort({ popularity: -1 });
     if (restaurants.length === 0) {
       res.status(404).json({ error: 'restaurant not found' });
+      return;
     } else {
       res.status(200).json(restaurants);
-      console.log('restaurants displayed');
+      return;
     }
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       res.status(401).json({ error: 'unauthorized user' });
+      return;
     }
     res.status(500).json({ error: 'internal error' });
+    return;
   }
 }
 
@@ -81,6 +87,7 @@ async function deleteRestaurant(req: Request, res: Response) {
 
     if (!rest || rest.deletedAt !== null) {
       res.status(404).json({ error: 'restaurant not found' });
+      return;
     }
 
     if (rest?.owner.toString() !== loggedUser._id.toString()) {
@@ -96,7 +103,7 @@ async function deleteRestaurant(req: Request, res: Response) {
     );
 
     res.status(200).json(restaurant);
-    console.log('restaurant deleted');
+    return;
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
@@ -113,6 +120,7 @@ async function updateRestaurant(req: Request, res: Response) {
 
     if (!rest || rest.deletedAt !== null) {
       res.status(404).json({ error: 'restaurant not found' });
+      return;
     }
 
     if (rest?.owner.toString() !== loggedUser._id.toString()) {
@@ -124,12 +132,14 @@ async function updateRestaurant(req: Request, res: Response) {
     });
 
     res.status(200).json(restaurant);
-    console.log('restaurant updated');
+    return;
   } catch (e) {
     if (e instanceof UnauthorizedError) {
       res.status(401).json({ error: 'unauthorized user' });
+      return;
     }
     res.status(500).json({ error: 'internal error' });
+    return;
   }
 }
 

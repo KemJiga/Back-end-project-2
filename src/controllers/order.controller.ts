@@ -25,6 +25,7 @@ async function createOrder(req: Request, res: Response) {
     const rest = await Restaurant.findByIdAndUpdate(restaurant, updatePopularity);
     if (!rest) {
       res.status(404).json({ error: 'Restaurant not found' });
+      return;
     } else {
       await Promise.all(
         products.map(async (p: [Schema.Types.ObjectId, number]) => {
@@ -34,10 +35,8 @@ async function createOrder(req: Request, res: Response) {
           } catch (e) {
             if (e instanceof Error) res.status(500).json({ error: e.message });
           }
-          console.log(total);
         })
       );
-      console.log('final ' + total);
       const newOrder = new Order({
         user: user._id as string,
         restaurant,
@@ -47,7 +46,7 @@ async function createOrder(req: Request, res: Response) {
       });
       await newOrder.save();
       res.status(201).json(newOrder);
-      console.log('order added');
+      return;
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -64,9 +63,10 @@ async function getOrderById(req: Request, res: Response) {
     const order = await Order.findById(_id);
     if (!order || order.deletedAt !== null) {
       res.status(404).json({ error: 'Order not found' });
+      return;
     } else {
       res.status(200).json(order);
-      console.log('Order displayed');
+      return;
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -82,9 +82,10 @@ async function getCreatedOrders(req: Request, res: Response) {
     const orders = await Order.find({ status: 'Created', deletedAt: null });
     if (orders.length === 0) {
       res.status(404).json({ error: 'Order not found' });
+      return;
     } else {
       res.status(200).json(orders);
-      console.log('Order displayed');
+      return;
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -107,13 +108,13 @@ async function getFilteredOrders(req: Request, res: Response) {
         $gte: new Date(startDate as string),
         $lte: new Date(finishDate as string),
       };
-    console.log(query);
     const orders = await Order.find(query);
     if (orders.length === 0) {
       res.status(404).json({ error: 'Order not found' });
+      return;
     } else {
       res.status(200).json(orders);
-      console.log('Order displayed');
+      return;
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -125,6 +126,7 @@ async function updateOrder(req: Request, res: Response) {
   const { products, status } = req.body;
   if (!(products || status)) {
     res.status(400).json({ error: 'No parameters to update provided' });
+    return;
   }
   try {
     const user = await getUserFromToken(req);
@@ -134,6 +136,7 @@ async function updateOrder(req: Request, res: Response) {
     const order = await Order.findById(_id);
     if (!order || order.deletedAt !== null) {
       res.status(404).json({ error: 'Order not found' });
+      return;
     } else {
       if (order.status !== 'Sended' && order.status != 'Delivered') {
         const updatedOrder = await Order.findByIdAndUpdate(
@@ -142,9 +145,10 @@ async function updateOrder(req: Request, res: Response) {
           { new: true }
         );
         res.status(200).json(updatedOrder);
-        console.log('Order updated');
+        return;
       } else {
         res.status(400).json({ error: 'Order can not be updated' });
+        return;
       }
     }
   } catch (e) {
@@ -175,7 +179,7 @@ async function deleteOrder(req: Request, res: Response) {
       }
     );
     res.status(200).json(deletedOrder);
-    console.log('Order deleted');
+    return;
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }

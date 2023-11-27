@@ -27,7 +27,7 @@ async function createProduct(req: Request, res: Response) {
     const productInput: ProductInput = { name, description, price, category, restaurant };
     const newProduct = await Product.create(productInput);
     res.status(201).json(newProduct);
-    console.log('product added');
+    return;
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
@@ -43,9 +43,10 @@ async function getProductById(req: Request, res: Response) {
     const product = await Product.findById(_id);
     if (!product || product.deletedAt !== null) {
       res.status(404).json({ error: 'Product not found' });
+      return;
     } else {
       res.status(200).json(product);
-      console.log('product displayed');
+      return;
     }
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
@@ -64,7 +65,7 @@ async function getProducts(req: Request, res: Response) {
     }
     const products = await Product.find(query);
     res.status(200).json(products);
-    console.log('products displayed');
+    return;
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
@@ -100,7 +101,7 @@ async function deleteProduct(req: Request, res: Response) {
     );
 
     res.status(200).json(product);
-    console.log('product deleted');
+    return;
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
@@ -113,6 +114,7 @@ async function updateProduct(req: Request, res: Response) {
 
   if (!(name || price || category || deletedAt)) {
     res.status(400).json({ error: 'No parameters to update provided' });
+    return;
   }
   try {
     const prod = await Product.findOne({ _id: _id, deletedAt: null });
@@ -139,7 +141,7 @@ async function updateProduct(req: Request, res: Response) {
     });
 
     res.status(200).json(product);
-    console.log('product updated');
+    return;
   } catch (e) {
     if (e instanceof Error) res.status(500).json({ error: e.message });
   }
