@@ -76,7 +76,7 @@ describe('Pruebas unitarias de ruta de usuario', () => {
       const response = await request(app)
         .get('/api/users/' + userId)
         .set('Authorization', `Bearer ${token}`);
-  
+
       expect(response.status).toBe(200);
     });
 
@@ -84,26 +84,95 @@ describe('Pruebas unitarias de ruta de usuario', () => {
       const response = await request(app)
         .get('/api/users/')
         .set('Authorization', `Bearer ${token}`);
-  
-      expect(response.status).toBe(400);
+
+      expect(response.status).toBe(404);
     });
 
     it('Debería fallar (id no existe en db)', async () => {
       const response = await request(app)
-        .get('/api/users/' + userId.replace('a', 'b'))
+        .get('/api/users/' + userId.replace(userId.toString()[0], 'b'))
         .set('Authorization', `Bearer ${token}`);
-  
+
       expect(response.status).toBe(404);
     });
 
     it('Debería fallar (token no es valido)', async () => {
       const response = await request(app)
         .get('/api/users/' + userId)
-        .set('Authorization', `Bearer ${token.replace('a', 'b')}`);
-  
-      expect(response.status).toBe(200);
+        .set('Authorization', 'Bearer  your_token');
+
+      expect(response.status).toBe(500);
     });
   });
 
-  // Agrega más pruebas según sea necesario
+  describe('PUT /user/:id', () => {
+    it('Debería actualizar un usuario por ID correctamente', async () => {
+      const response = await request(app)
+        .patch('/api/users/' + userId)
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          name: 'John',
+        });
+
+      expect(response.status).toBe(200);
+    });
+
+    it('Debería fallar por no Id proveido', async () => {
+      const response = await request(app)
+        .patch('/api/users/')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(404);
+    });
+
+    it('Debería fallar (id no existe en db)', async () => {
+      const response = await request(app)
+        .patch('/api/users/' + userId.replace(userId.toString()[0], 'b'))
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(401);
+    });
+
+    it('Debería fallar (token no es valido)', async () => {
+      const response = await request(app)
+        .patch('/api/users/' + userId)
+        .set('Authorization', 'Bearer  your_token');
+
+      expect(response.status).toBe(500);
+    });
+  });
+
+  describe('DELETE /user/:id', () => {
+    it('Debería eliminar un usuario por ID correctamente', async () => {
+      const response = await request(app)
+        .delete('/api/users/' + userId)
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+    });
+
+    it('Debería fallar por no Id proveido', async () => {
+      const response = await request(app)
+        .delete('/api/users/')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(404);
+    });
+
+    it('Debería fallar (id no existe en db)', async () => {
+      const response = await request(app)
+        .delete('/api/users/' + userId.replace(userId.toString()[0], 'b'))
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(401);
+    });
+
+    it('Debería fallar (token no es valido)', async () => {
+      const response = await request(app)
+        .delete('/api/users/' + userId)
+        .set('Authorization', 'Bearer  your_token');
+
+      expect(response.status).toBe(500);
+    });
+  });
 });

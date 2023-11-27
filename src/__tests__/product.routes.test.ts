@@ -59,7 +59,6 @@ describe('Product tests', () => {
           category: 'Gourmet',
           address: 'Walter street 82',
         });
-      console.log(response.body);
       expect(response.status).toBe(201);
       restaurant_id = response.body._id;
     });
@@ -93,7 +92,6 @@ describe('Product tests', () => {
         .get('/api/products/' + product_id.replace(product_id.toString()[0], 'b'))
         .set('Authorization', `Bearer ${token}`);
 
-      console.log(response.body);
       expect(response.status).toBe(404);
     });
 
