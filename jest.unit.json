@@ -3,7 +3,9 @@
   "preset": "ts-jest",
   "coverageDirectory": "./coverage",
   "testMatch": [
-    "**/?(*.)+(routes.test).ts"
+    "**/?(*.)+(routes.test).ts",
+    "**/?(*.)+(controller.test).ts",
+    "**/?(*.)+(integration.test).ts"
   ],
   "resetMocks": true,
   "clearMocks": true,
